@@ -20,11 +20,13 @@ app.use(cookieParser())
 //Import routes
 import userRoutes from './routes/user.routes.js'
 import healthCheck from './routes/healthcheck.routes.js'
-
-
+import tweetRoutes from './routes/tweet.routes.js'
+import playlistRoutes from './routes/playlist.routes.js'
 //routes declaration
 app.use("/api/v1/users", userRoutes)
 app.use("/api/v1/healthcheck", healthCheck)
+app.use("/api/v1/tweet", tweetRoutes)
+app.use("/api/v1/playlist", playlistRoutes)
 
 
 
