@@ -27,7 +27,7 @@ const createTweet = async (req, res, next) => {
             throw new ApiError(404, "Unable to tweet, please try again later")
         }
 
-        res.status(200).json(new ApiResponse(200, tweet, "Tweet Successfull"))
+        return res.status(200).json(new ApiResponse(200, tweet, "Tweet Successfull"))
 
 
     } catch (error) {
@@ -50,7 +50,7 @@ const getUserTweets = async (req, res, next) => {
             throw new ApiError(404, "No tweets found")
         }
 
-        res.status(200).json(new ApiResponse(200, tweets, "Tweets received!"))
+        return res.status(200).json(new ApiResponse(200, tweets, "Tweets received!"))
     } catch (error) {
         next(error)
     }
@@ -82,7 +82,7 @@ const updateTweet = async (req, res, next) => {
             throw new ApiError(404, "Unable to update please try again later")
         }
 
-        res.status(200).json(new ApiResponse(200, tweet, "Tweet updated successfully"))
+        return res.status(200).json(new ApiResponse(200, tweet, "Tweet updated successfully"))
 
     } catch (error) {
         next(error)
@@ -103,7 +103,7 @@ const deleteTweet = async (req, res, next) => {
             throw new ApiError(404, "Unable to delete, Tweet not found")
         }
 
-        res.status(200).json(new ApiResponse(200, tweet, "Tweet deleted successfully"))
+        return res.status(200).json(new ApiResponse(200, tweet, "Tweet deleted successfully"))
 
     } catch (error) {
         next(error)
