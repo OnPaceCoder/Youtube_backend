@@ -105,6 +105,26 @@ const addVideoToPlaylist = async (req, res, next) => {
 const removeVideoFromPlaylist = async (req, res, next) => {
     try {
 
+        const { videoId, playlistId } = req.params
+
+        if (!videoId || !playlistId) {
+            throw new ApiError(400, "Video ID and playlist ID both are required")
+        }
+        const playlist = await Playlist.findByIdAndUpdate(playlistId, {
+            $pull: {
+                videos: videoId
+            },
+        }, {
+            new: true
+        })
+
+
+        if (!playlist) {
+            throw new ApiError(404, "Playlist not found")
+        }
+
+        return res.status(200).json(new ApiResponse(200, playlist, "Playlist updated"))
+
     } catch (error) {
         next(error)
     }
@@ -113,6 +133,18 @@ const removeVideoFromPlaylist = async (req, res, next) => {
 
 const deletePlaylist = async (req, res, next) => {
     try {
+        const { playlistId } = req.params;
+
+        if (!playlistId) {
+            throw new ApiError(400, "Playlist Id not provided")
+        }
+
+        const playlist = await Playlist.findByIdAndDelete(playlistId);
+
+        if (!playlist) {
+            throw new ApiError(404, "Playlist not found")
+        }
+        return res.status(204).json(new ApiResponse(204, playlist, "Playlist deleted"))
 
     } catch (error) {
         next(error)
@@ -121,6 +153,34 @@ const deletePlaylist = async (req, res, next) => {
 
 const updatePlaylist = async (req, res, next) => {
     try {
+        const { playlistId } = req.params;
+        const { name, description } = req.body;
+
+
+        if (!name && !description) {
+            throw new ApiError(400, "Name or description is required");
+        }
+
+        const updatedPlaylist = await Playlist.findByIdAndUpdate(playlistId, {
+            $set: {
+                name,
+                description
+            }
+        },
+            {
+                new: true
+            })
+
+        if (!updatePlaylist) {
+            throw new ApiError(404, "Playlist not found and unable to update playlist")
+        }
+        return res
+            .status(200)
+            .json(new ApiResponse(200, updatedPlaylist, "Playlist updated Successfully"));
+
+
+
+
 
     } catch (error) {
         next(error)
