@@ -1,6 +1,7 @@
 import { Video } from "../models/video/video.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
+import { uploadOnCloudinary } from "../utils/cloudinary.js"
 
 
 
@@ -26,8 +27,64 @@ const getAllVideos = async (req, res, next) => {
 }
 
 const publishAVideo = async (req, res, next) => {
-    const { title, description } = req.body
     // TODO: get video, upload to cloudinary, create video
+    try {
+
+        //Get Title , description and duration from req.body
+        const { title, description, duration } = req.body;
+
+        if (
+            [title, description].some(
+                (field) => field?.trim() === ""
+            )
+        ) {
+            throw new ApiError(400, "All fields are required");
+        }
+
+
+        //Check if videoFile is uploaded or not
+        if (!req.files?.videoFile) {
+            throw new ApiError(400, "VideoFile is required")
+        }
+
+        const videoPath = req.files?.videoFile[0]?.path
+
+        //Check if thumbnail is uploaded or not
+        if (!req.files?.thumbnail) {
+            throw new ApiError(400, "Thumbnail is required")
+        }
+
+        const thumbnailPath = req.files?.thumbnail[0]?.path;
+
+        const videoFile = await uploadOnCloudinary(videoPath);
+        const thumbnail = await uploadOnCloudinary(thumbnailPath);
+
+        if (videoFile == null || thumbnail == null) {
+            throw new ApiError(400, "Error occured while uploading video or thumbnail,please try again later")
+        }
+
+        const video = await Video.create({
+            videoFile: videoFile.secure_url,
+            thumbnail: thumbnail.secure_url,
+            title,
+            description,
+            duration: videoFile?.duration || 0,
+            videoPublicId: videoFile?.public_id || "",
+            thumbnailPublicId: thumbnail?.public_id || "",
+            owner: req.user._id
+        })
+
+        if (!video) {
+            throw new ApiError(400, "Something went wrong while uploading video please try again later")
+        }
+
+        return res.status(200).json(new ApiResponse(200, video, "Video uploaded successfully"))
+
+    } catch (error) {
+        next(error)
+    }
+
+
 }
 
 const getVideoById = async (req, res, next) => {
