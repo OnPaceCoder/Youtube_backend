@@ -1,6 +1,6 @@
 import { Comment } from "../models/video/comment.model.js";
 import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 
 
@@ -76,17 +76,17 @@ const updateComment = async (req, res, next) => {
             throw new ApiError(400, "Comment is required")
         }
 
-        const updatedComment = await Comment.findByIdAndUpdate(commentId, {
+        const updatedComment = await Comment.findOneAndUpdate({ _id: commentId, owner: req.user._id }, {
             $set: {
                 content
             }
         }, { new: true })
 
-        if (!updateComment) {
+        if (!updatedComment) {
             throw new ApiError(404, "Comment not found")
         }
 
-        return res.status(200).json(new ApiResponse(200, updateComment, "Comment updated successfully"))
+        return res.status(200).json(new ApiResponse(200, updatedComment, "Comment updated successfully"))
 
 
     } catch (error) {
@@ -105,13 +105,13 @@ const deleteComment = async (req, res, next) => {
             throw new ApiError(400, "CommentId is required")
         }
 
-        const deletedComment = await Comment.findByIdAndDelete(commentId, { new: true })
+        const deletedComment = await Comment.findOneAndDelete({ _id: commentId, owner: req.user._id }, { new: true })
 
         if (!deletedComment) {
             throw new ApiError(404, "Comment not found")
         }
 
-        return res.status(200).json(new ApiResponse(200, deletedComment, "Comment deleted"))
+        return res.status(204).json(new ApiResponse(204, deletedComment, "Comment deleted"))
 
     } catch (error) {
         next(error)
