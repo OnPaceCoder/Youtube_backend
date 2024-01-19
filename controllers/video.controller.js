@@ -1,7 +1,7 @@
 import { Video } from "../models/video/video.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
-import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { deleteOnCloudinary, deleteVideoOnCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js"
 
 
 
@@ -9,7 +9,7 @@ const getAllVideos = async (req, res, next) => {
     //TODO: get all videos based on query, sort, pagination
 
     try {
-        const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
+        const { page = 1, limit = 10, sortBy, sortType, userId } = req.query
 
         const videos = await Video.find({ owner: userId }).limit(limit).skip((page - 1) * limit).sort({ [sortBy]: sortType })
 
@@ -31,7 +31,7 @@ const publishAVideo = async (req, res, next) => {
     try {
 
         //Get Title , description and duration from req.body
-        const { title, description, duration } = req.body;
+        const { title, description } = req.body;
 
         if (
             [title, description].some(
@@ -125,21 +125,63 @@ const updateVideo = async (req, res, next) => {
             throw new ApiError(400, "VideoId is requried");
         }
 
-        const updatedVideo = await Video.findByIdAndUpdate(videoId, {
-            $set: {
-                title,
-                description,
+        if (req.file?.fieldname === "thumbnail") {
+            const thumbnailPath = req.file?.path;
 
+            const oldVideoDetails = await Video.findOne({ _id: videoId, owner: req.user._id });
+
+            if (!oldVideoDetails) {
+                throw new ApiError(404, "Video not found or you are not the owner ")
             }
-        }, {
-            new: true
-        })
+            const oldThumbnailPublicId = oldVideoDetails.thumbnailPublicId;
 
-        if (!updateVideo) {
-            throw new ApiError(404, "Video not found")
+            const newThumbnail = await uploadOnCloudinary(thumbnailPath);
+
+            if (!newThumbnail) {
+                throw new ApiError(400, "Unable to upload new Thumbnail")
+            }
+
+            const updatedVideo = await Video.findOneAndUpdate({ _id: videoId, owner: req.user._id }, {
+                $set: {
+                    title, description,
+                    thumbnail: newThumbnail.secure_url,
+                    thumbnailPublicId: newThumbnail.public_id
+                }
+            }, {
+                new: true
+            })
+
+            if (!updatedVideo) {
+                throw new ApiError("Unable to update, please try again later")
+            }
+            const deleteOldThumbnail = await deleteOnCloudinary(oldThumbnailPublicId);
+
+            if (!deleteOldThumbnail) {
+                throw new ApiError(400, "Unable to delete old thumbnail")
+            }
+
+            return res.status(200).json(new ApiResponse(200, updatedVideo, "Video updated successfully"))
+
+        }
+        else {
+
+            const updatedVideo = await Video.findOneAndUpdate({ _id: videoId, owner: req.user._id }, {
+                $set: {
+                    title,
+                    description,
+                }
+            }, {
+                new: true
+            })
+
+
+            if (!updatedVideo) {
+                throw new ApiError(404, "Video not found or you are not the owner")
+            }
+
+            return res.status(200).json(new ApiResponse(200, updatedVideo, "Video updated successfully"))
         }
 
-        return res.status(200).json(new ApiResponse(200, updateVideo, "Video updated successfully"))
 
     } catch (error) {
         next(error)
@@ -150,15 +192,35 @@ const updateVideo = async (req, res, next) => {
 const deleteVideo = async (req, res, next) => {
     try {
         const { videoId } = req.params
-
-
         if (!videoId) {
             throw new ApiError(400, "VideoId is required");
         }
-        const video = await Video.findByIdAndDelete(videoId);
+
+        const oldVideoDetails = await Video.findOne({ _id: videoId, owner: req.user._id });
+
+        if (!oldVideoDetails) {
+            throw new ApiError(404, "Video not found")
+        }
+
+        const oldThumbnailPublicId = oldVideoDetails.thumbnailPublicId;
+        const oldVideoPublicId = oldVideoDetails.videoPublicId;
+
+
+
+        const video = await Video.findOneAndDelete({ _id: videoId, owner: req.user._id });
 
         if (!video) {
             throw new ApiError(404, "Video not found")
+        }
+
+
+
+        const deleteOldVideo = await deleteVideoOnCloudinary(oldVideoPublicId)
+        const deleteOldThumbnail = await deleteOnCloudinary(oldThumbnailPublicId);
+
+
+        if (!deleteOldThumbnail || !deleteOldVideo) {
+            throw new ApiError(400, "Unable to delete old thumbnail or video")
         }
 
         return res.status(204).json(new ApiResponse(204, video, "Video Deleted"))
@@ -175,22 +237,16 @@ const togglePublishStatus = async (req, res, next) => {
             throw new ApiError(400, "VideoId is required");
         }
 
-        const video = await Video.findById(videoId).select("isPublished")
+        const video = await Video.findOne({ _id: videoId, owner: req.user._id }).select("isPublished")
 
-
-        const updateVideoStatus = await Video.findByIdAndUpdate(videoId, {
-            $set: {
-                isPublished: { $ne: ["$isPublished", true] }
-            }
-        }, {
-            new: true
-        })
-
-        if (!updateVideoStatus) {
-            throw new ApiError(404, "Video not found and unable to update")
+        if (!video) {
+            throw new ApiError(400, "Video not found")
         }
+        video.isPublished = !video.isPublished;
+        await video.save();
 
-        return res.status(204).json(new ApiResponse(204, updateVideoStatus, "Status Updated"))
+
+        return res.status(200).json(new ApiResponse(200, video, "Status Updated"))
     } catch (error) {
         next(error)
     }
