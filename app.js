@@ -22,13 +22,18 @@ import userRoutes from './routes/user.routes.js'
 import healthCheck from './routes/healthcheck.routes.js'
 import tweetRoutes from './routes/tweet.routes.js'
 import playlistRoutes from './routes/playlist.routes.js'
+import videoRoutes from './routes/video.routes.js'
+import commentRoutes from './routes/comment.routes.js'
+import likeRoutes from './routes/like.routes.js'
+
 //routes declaration
 app.use("/api/v1/users", userRoutes)
 app.use("/api/v1/healthcheck", healthCheck)
 app.use("/api/v1/tweet", tweetRoutes)
 app.use("/api/v1/playlist", playlistRoutes)
-
-
+app.use("/api/v1/video", videoRoutes)
+app.use("/api/v1/comment", commentRoutes)
+app.use("/api/v1/like", likeRoutes)
 
 
 export { app }
