@@ -139,7 +139,7 @@ const deletePlaylist = async (req, res, next) => {
             throw new ApiError(400, "Playlist Id not provided")
         }
 
-        const playlist = await Playlist.findByIdAndDelete(playlistId);
+        const playlist = await Playlist.findOneAndDelete({ _id: playlistId, owner: req.user._id });
 
         if (!playlist) {
             throw new ApiError(404, "Playlist not found")
@@ -161,7 +161,7 @@ const updatePlaylist = async (req, res, next) => {
             throw new ApiError(400, "Name or description is required");
         }
 
-        const updatedPlaylist = await Playlist.findByIdAndUpdate(playlistId, {
+        const updatedPlaylist = await Playlist.findOneAndUpdate({ _id: playlistId, owner: req.user._id }, {
             $set: {
                 name,
                 description
@@ -171,7 +171,7 @@ const updatePlaylist = async (req, res, next) => {
                 new: true
             })
 
-        if (!updatePlaylist) {
+        if (!updatedPlaylist) {
             throw new ApiError(404, "Playlist not found and unable to update playlist")
         }
         return res
