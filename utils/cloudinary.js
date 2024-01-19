@@ -7,7 +7,23 @@ const deleteOnCloudinary = async (publicId) => {
 
 
 
-        const result = await cloudinary.uploader.destroy(publicId);
+        const result = await cloudinary.uploader.destroy(publicId, {
+            resource_type: "image"
+        });
+
+        return result;
+    } catch (error) {
+        throw new ApiError(400, "Not able to delete old image")
+    }
+}
+const deleteVideoOnCloudinary = async (publicId) => {
+    try {
+
+
+
+        const result = await cloudinary.uploader.destroy(publicId, {
+            resource_type: 'video'
+        });
 
         return result;
     } catch (error) {
@@ -47,4 +63,4 @@ const uploadOnCloudinary = async (localFilePath) => {
 
 }
 
-export { uploadOnCloudinary, deleteOnCloudinary }
+export { uploadOnCloudinary, deleteOnCloudinary, deleteVideoOnCloudinary }
