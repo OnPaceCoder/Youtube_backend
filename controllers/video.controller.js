@@ -99,8 +99,12 @@ const getVideoById = async (req, res, next) => {
 
         }
 
+
+
         const video = await Video.findById(videoId);
 
+        video.views = video.views + 1;
+        await video.save();
         if (!video) {
             throw new ApiError(404, "Video not found")
         }
