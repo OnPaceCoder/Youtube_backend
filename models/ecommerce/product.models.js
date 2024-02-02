@@ -11,9 +11,21 @@ const productSchema = new mongoose.Schema({
         type: String,
     },
     productImage: {
-        type: String,
+        required: true,
+        type: {
+            url: String,
+            localPath: String,
+        }
     },
-
+    subImages: {
+        type: [
+            {
+                url: String,
+                localPath: String
+            }
+        ]
+    }
+    ,
     price: {
         type: Number,
         default: 0,
@@ -26,6 +38,7 @@ const productSchema = new mongoose.Schema({
     category: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Category",
+        required: true
     },
     owner: {
         type: mongoose.Schema.Types.ObjectId,
