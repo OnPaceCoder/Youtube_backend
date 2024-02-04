@@ -1,6 +1,8 @@
 import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt"
+import { EcomProfile } from "../ecommerce/profile.models";
+import { Cart } from "../ecommerce/cart.models";
 
 const userSchema = new Schema({
     username: {
@@ -61,6 +63,22 @@ userSchema.pre("save", async function (next) {
     this.password = await bcrypt.hash(this.password, 12);
     next()
 })
+
+userSchema.post("save", async function (user, next) {
+    const ecomProfile = await EcomProfile.findOne({ owner: user._id });
+    const cart = await Cart.findOne({ owner: user._id });
+
+    if (!ecomProfile) {
+        await EcomProfile.create({ owner: user._id })
+    }
+    if (!cart) {
+        await Cart.create({ owner: user._id, items: [] })
+    };
+
+    next()
+})
+
+
 
 userSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password)
