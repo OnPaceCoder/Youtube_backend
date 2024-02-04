@@ -35,4 +35,4 @@ export const CouponTypeEnum = {
     FLAT: "FLAT"
 }
 
-export const AvailableCouponTypes = Object.values(AvailableCouponTypes)
+export const AvailableCouponTypes = Object.values(CouponTypeEnum)
