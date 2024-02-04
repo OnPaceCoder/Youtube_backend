@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-
+import { User } from '../video/user.model.js';
 const orderSchema = new mongoose.Schema({
     orderPrice: {
         type: Number,
