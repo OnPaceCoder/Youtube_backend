@@ -52,3 +52,5 @@ const updateAddressValidator = () => {
 
     ]
 }
+
+export { updateAddressValidator, createAddressValidator }
